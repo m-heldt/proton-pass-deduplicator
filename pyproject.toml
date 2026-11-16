@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "Mateusz Heldt", email = "23269740+m-heldt@users.noreply.github.com" }
 ]
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 dependencies = [
     "ipykernel>=7.4.0",
     "pydantic>=2.14.3",
