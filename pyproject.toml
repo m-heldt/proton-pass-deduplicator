@@ -1,7 +1,7 @@
 [project]
 name = "proton-pass-deduplicator"
 version = "0.1.0"
-description = "Add your description here"
+description = "Deduplicate your passes exported from Proton Pass"
 readme = "README.md"
 authors = [
     { name = "Mateusz Heldt", email = "23269740+m-heldt@users.noreply.github.com" }
