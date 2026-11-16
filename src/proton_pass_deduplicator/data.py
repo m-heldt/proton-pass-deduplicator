@@ -65,6 +65,9 @@ class ProtonPassExport:
     DATA_JSON_PATH = "Proton Pass/data.json"
     
     def __init__(self, path: Path | str):
+        if not Path(path).exists():
+            raise FileNotFoundError("The file does not exist")
+        
         self.path = Path(path)
         self._data = {}
         self._load()
@@ -85,7 +88,7 @@ class ProtonPassExport:
                     for id in self._data["vaults"]
                 }
 
-    def get_unique(self):
+    def get_unique(self) -> set:
         if self.main_vault is None:
             raise RuntimeError("Main vault must be selected before marking duplicates")
         main_vault = self.vaults[self.main_vault]
