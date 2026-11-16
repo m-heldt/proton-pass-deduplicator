@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Self, Any
 from pydantic import BaseModel, Field
 import hashlib
-
+from functools import cached_property
 
 
 class PassItemDataContent(BaseModel):
@@ -41,8 +41,9 @@ class PassItem(BaseModel):
     pinned: bool
     shareCount: int
     files: list[str] = Field(default_factory=list)
+    duplicate: bool = Field(False, repr=False)
 
-    @property
+    @cached_property
     def hash(self):
         model = self.data.model_dump()
         model["createTime"] = self.createTime
@@ -53,10 +54,10 @@ class PassItem(BaseModel):
         return cls(**item)
 
 
-class VaultItems(BaseModel):
+class Vault(BaseModel):
     id: str
     name: str
-    items: list[PassItem]
+    items: list[PassItem] = Field(repr=False)
 
 
 
@@ -65,23 +66,40 @@ class ProtonPassExport:
         self.path = Path(path)
         self._data = {}
         self._load()
+        self.main_vault = None
 
     def _load(self) -> None:
         DATA_JSON_PATH = "Proton Pass/data.json"
-        
+
         with zipfile.ZipFile(self.path) as archive:
             self._data = json.load(archive.open(DATA_JSON_PATH))
 
-    @property
+    @cached_property
     def vaults(self) -> list:
-        return [VaultItems(id=id, name=self._data["vaults"][id]["name"], items=self.get_items(id)) for id in self._data["vaults"]]
+        return {
+            self._data["vaults"]["name"]: Vault(
+                id=id,
+                name=self._data["vaults"][id]["name"],
+                items=self._data["vaults"][id]["items"],
+            )
+            for id in self._data["vaults"]
+        }
 
-    def get_vault_list(self) -> list:
-        return list(self._data["vaults"].keys())
 
-    def get_items_copy(self, vault_id: str) -> list[Any]:
-        items_copy = deepcopy(self._data["vaults"][vault_id]["items"])
-        return items_copy
+    def mark_duplicates(self, main_vault_name: str):
+        main_vault = self.vaults[main_vault_name]
+        vaults = [main_vault]
+        for vault in self.vaults:
+            if vault not in vaults:
+                vaults.append(vault)
 
-    def get_items(self, vault_id: str) -> list[PassItem]:
-        return [PassItem(**item) for item in self._data["vaults"][vault_id]["items"]]
+        items_deduplicated = {}
+        for vault in vaults:
+            for item in vault:
+                if item.hash not in items_deduplicated:
+                    items_deduplicated[item.hash]
+
+    @main_vault.setter
+    def main_vault(self, value: str | None) -> None:
+        if value is not None and value in self.vaults.keys():
+            self.main_vault = value
