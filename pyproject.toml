@@ -10,6 +10,8 @@ requires-python = ">=3.14"
 dependencies = [
     "ipykernel>=7.4.0",
     "pydantic>=2.14.3",
+    "rich>=15.0.0",
+    "typer>=0.29.1",
     "zipremove>=0.10.0",
 ]
 
